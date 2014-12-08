@@ -13,6 +13,7 @@ import android.os.Parcelable;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -136,6 +137,11 @@ public class SlidingUpPanelLayout extends ViewGroup {
     private View mMainView;
 
     /**
+     *
+     */
+    private boolean mIsSwipeDirectionDown;
+
+    /**
      * Current state of the slideable view.
      */
     public enum PanelState {
@@ -194,6 +200,8 @@ public class SlidingUpPanelLayout extends ViewGroup {
     private boolean mFirstLayout = true;
 
     private final Rect mTmpRect = new Rect();
+
+    public DragViewScrollOffsetProvider mDragViewScrollOffsetProvider;
 
     /**
      * Listener for monitoring events about sliding panes.
@@ -481,6 +489,14 @@ public class SlidingUpPanelLayout extends ViewGroup {
         return mAnchorPoint;
     }
 
+    public DragViewScrollOffsetProvider getDragViewScrollListener() {
+        return mDragViewScrollOffsetProvider;
+    }
+
+    public void setDragViewScrollListener(DragViewScrollOffsetProvider mDragViewScrollOffsetProvider) {
+        this.mDragViewScrollOffsetProvider = mDragViewScrollOffsetProvider;
+    }
+
     /**
      * Sets whether or not the panel overlays the content
      *
@@ -579,6 +595,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
         final Drawable bg = v.getBackground();
         return bg != null && bg.getOpacity() == PixelFormat.OPAQUE;
     }
+
 
     @Override
     protected void onAttachedToWindow() {
@@ -753,31 +770,55 @@ public class SlidingUpPanelLayout extends ViewGroup {
         super.setEnabled(enabled);
     }
 
+    protected boolean lockScrollView() {
+        return mSlideState == PanelState.ANCHORED || mSlideState == PanelState.COLLAPSED || mSlideState == PanelState.DRAGGING;
+    }
+
+    protected boolean forceDrag() {
+        if (mSlideState == PanelState.EXPANDED && mDragViewScrollOffsetProvider.getScrollOffset() == 0 && mIsSwipeDirectionDown) {
+            return true;
+        }
+        return false;
+    }
+
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final int action = MotionEventCompat.getActionMasked(ev);
 
+        final float x = ev.getX();
+        final float y = ev.getY();
+
+        mIsSwipeDirectionDown = ((y - mInitialMotionY) > 0);
+        Log.d(TAG, "action:" + action + " y:" + y + " initialMotionY:" + mInitialMotionY + " down:" + mIsSwipeDirectionDown);
 
         if (!isEnabled() || !mIsSlidingEnabled || (mIsUnableToDrag && action != MotionEvent.ACTION_DOWN)) {
+            Log.e(TAG, "SUPER UnableToDrag:" + mIsUnableToDrag + " AND (MOVE OR UP)");
             mDragHelper.cancel();
             return super.onInterceptTouchEvent(ev);
         }
 
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
+            Log.e(TAG, "FALSE BECAUSE CANCEL OR UP");
             mDragHelper.cancel();
             return false;
         }
 
-        final float x = ev.getX();
-        final float y = ev.getY();
+
+        boolean lockScroll = lockScrollView();
+        boolean forceDrag = forceDrag();
 
         switch (action) {
+
             case MotionEvent.ACTION_DOWN: {
+
+                Log.d(TAG, "DOWN");
                 mIsUnableToDrag = false;
                 mInitialMotionX = x;
                 mInitialMotionY = y;
                 break;
             }
+
 
             case MotionEvent.ACTION_MOVE: {
                 final float adx = Math.abs(x - mInitialMotionX);
@@ -786,20 +827,27 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
                 // Handle any horizontal scrolling on the drag view.
                 if (mIsUsingDragViewTouchEvents && adx > dragSlop && ady < dragSlop) {
+                    Log.d(TAG, "MOVE onIntercept");
                     return super.onInterceptTouchEvent(ev);
                 }
 
-                if ((ady > dragSlop && adx > ady) || !isDragViewUnder((int) mInitialMotionX, (int) mInitialMotionY)) {
+                if (((ady > dragSlop && adx > ady) || !isDragViewUnder((int) mInitialMotionX, (int) mInitialMotionY)) && !lockScroll && !forceDrag) {
                     mDragHelper.cancel();
                     mIsUnableToDrag = true;
+                    Log.d(TAG, "MOVE false");
                     return false;
                 }
                 break;
             }
         }
 
-        return mDragHelper.shouldInterceptTouchEvent(ev);
+        boolean shouldDragByHelper = mDragHelper.shouldInterceptTouchEvent(ev);
+
+        Log.d(TAG, " shoudlInterceptByDragHelper:" + shouldDragByHelper + " lockScroll:" + lockScroll + " forceDrag:" + forceDrag + " directionDown:" + mIsSwipeDirectionDown);
+
+        return shouldDragByHelper || lockScroll || forceDrag;
     }
+
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
