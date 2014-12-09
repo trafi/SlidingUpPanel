@@ -19,7 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
-
+//TODO remove logs
 public class SlidingUpPanelLayout extends ViewGroup {
 
     private static final String TAG = SlidingUpPanelLayout.class.getSimpleName();
@@ -136,10 +136,6 @@ public class SlidingUpPanelLayout extends ViewGroup {
      */
     private View mMainView;
 
-    /**
-     *
-     */
-    private boolean mIsSwipeDirectionDown;
 
     /**
      * Current state of the slideable view.
@@ -346,7 +342,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
         setWillNotDraw(false);
 
-        mDragHelper = ViewDragHelper.create(this, 0.5f, new DragHelperCallback());
+        mDragHelper = ViewDragHelper.create(this, 0.1f, new DragHelperCallback());
         mDragHelper.setMinVelocity(mMinFlingVelocity * density);
 
         mIsSlidingEnabled = true;
@@ -770,15 +766,9 @@ public class SlidingUpPanelLayout extends ViewGroup {
         super.setEnabled(enabled);
     }
 
-    protected boolean lockScrollView() {
-        return mSlideState == PanelState.ANCHORED || mSlideState == PanelState.COLLAPSED || mSlideState == PanelState.DRAGGING;
-    }
 
-    protected boolean forceDrag() {
-        if (mSlideState == PanelState.EXPANDED && mDragViewScrollOffsetProvider.getScrollOffset() == 0 && mIsSwipeDirectionDown) {
-            return true;
-        }
-        return false;
+    protected boolean lockPanel() {
+        return (mSlideState == PanelState.EXPANDED || mSlideState == PanelState.ANCHORED) && mDragViewScrollOffsetProvider != null && mDragViewScrollOffsetProvider.getScrollOffset() > 0;
     }
 
 
@@ -786,16 +776,11 @@ public class SlidingUpPanelLayout extends ViewGroup {
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final int action = MotionEventCompat.getActionMasked(ev);
 
-        final float x = ev.getX();
-        final float y = ev.getY();
-
-        mIsSwipeDirectionDown = ((y - mInitialMotionY) > 0);
-        Log.d(TAG, "action:" + action + " y:" + y + " initialMotionY:" + mInitialMotionY + " down:" + mIsSwipeDirectionDown);
 
         if (!isEnabled() || !mIsSlidingEnabled || (mIsUnableToDrag && action != MotionEvent.ACTION_DOWN)) {
             Log.e(TAG, "SUPER UnableToDrag:" + mIsUnableToDrag + " AND (MOVE OR UP)");
             mDragHelper.cancel();
-            return super.onInterceptTouchEvent(ev);
+            return false;
         }
 
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
@@ -804,48 +789,72 @@ public class SlidingUpPanelLayout extends ViewGroup {
             return false;
         }
 
-
-        boolean lockScroll = lockScrollView();
-        boolean forceDrag = forceDrag();
+        final float x = ev.getX();
+        final float y = ev.getY();
 
         switch (action) {
 
             case MotionEvent.ACTION_DOWN: {
 
-                Log.d(TAG, "DOWN");
                 mIsUnableToDrag = false;
                 mInitialMotionX = x;
                 mInitialMotionY = y;
                 break;
             }
 
-
             case MotionEvent.ACTION_MOVE: {
                 final float adx = Math.abs(x - mInitialMotionX);
                 final float ady = Math.abs(y - mInitialMotionY);
                 final int dragSlop = mDragHelper.getTouchSlop();
 
+
                 // Handle any horizontal scrolling on the drag view.
                 if (mIsUsingDragViewTouchEvents && adx > dragSlop && ady < dragSlop) {
-                    Log.d(TAG, "MOVE onIntercept");
-                    return super.onInterceptTouchEvent(ev);
-                }
-
-                if (((ady > dragSlop && adx > ady) || !isDragViewUnder((int) mInitialMotionX, (int) mInitialMotionY)) && !lockScroll && !forceDrag) {
+                    Log.e(TAG, "MOVE horizontal onIntercept");
                     mDragHelper.cancel();
                     mIsUnableToDrag = true;
-                    Log.d(TAG, "MOVE false");
+                    return false;
+                }
+
+                boolean lockPanel = (lockPanel() && !isPanelOffsetUnder((int) mInitialMotionX, (int) mInitialMotionY));
+                if (lockPanel) {
+                    Log.e(TAG, "MOVE lockpanel onIntercept");
+                    mDragHelper.cancel();
+                    mIsUnableToDrag = true;
+                    return false;
+                }
+
+                if (((ady > dragSlop && adx > ady) || !isDragViewUnder((int) mInitialMotionX, (int) mInitialMotionY))) {
+                    mDragHelper.cancel();
+                    mIsUnableToDrag = true;
+                    Log.e(TAG, "MOVE false horizontal slope bigger OR its not dragging view");
                     return false;
                 }
                 break;
             }
         }
 
-        boolean shouldDragByHelper = mDragHelper.shouldInterceptTouchEvent(ev);
+        boolean shouldIntercept = mDragHelper.shouldInterceptTouchEvent(ev);
+        //1 - draging, 2 - settling, 0 - iddle
+        Log.d(TAG, makeActionString(action) + " intercept:" + shouldIntercept+" slidingState:"+mSlideState+" mDragHelperState:"+mDragHelper.getViewDragState());
 
-        Log.d(TAG, " shoudlInterceptByDragHelper:" + shouldDragByHelper + " lockScroll:" + lockScroll + " forceDrag:" + forceDrag + " directionDown:" + mIsSwipeDirectionDown);
+        return shouldIntercept;
+    }
 
-        return shouldDragByHelper || lockScroll || forceDrag;
+    private String makeActionString(int action) {
+        switch (action) {
+            case MotionEvent.ACTION_UP:
+                return "UP";
+            case MotionEvent.ACTION_DOWN:
+                return "DOWN";
+            case MotionEvent.ACTION_MOVE:
+                return "MOVE";
+            case MotionEvent.ACTION_SCROLL:
+                return "SCROLL";
+            case MotionEvent.ACTION_CANCEL:
+                return "CANCEL";
+        }
+        return "UNKNOWN";
     }
 
 
@@ -868,6 +877,18 @@ public class SlidingUpPanelLayout extends ViewGroup {
         int screenY = parentLocation[1] + y;
         return screenX >= viewLocation[0] && screenX < viewLocation[0] + mDragView.getWidth() &&
                 screenY >= viewLocation[1] && screenY < viewLocation[1] + mDragView.getHeight();
+    }
+
+    private boolean isPanelOffsetUnder(int x, int y) {
+        if (mDragView == null) return false;
+        int[] viewLocation = new int[2];
+        mDragView.getLocationOnScreen(viewLocation);
+        int[] parentLocation = new int[2];
+        this.getLocationOnScreen(parentLocation);
+        int screenX = parentLocation[0] + x;
+        int screenY = parentLocation[1] + y;
+        return screenX >= viewLocation[0] && screenX < viewLocation[0] + mDragView.getWidth() &&
+                screenY >= viewLocation[1] && screenY < viewLocation[1] + getPanelHeight();
     }
 
     private boolean expandPanel(View pane, int initialVelocity, float mSlideOffset) {
