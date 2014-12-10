@@ -37,7 +37,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
     /**
      * Default initial state for the component
      */
-    private static PanelState DEFAULT_SLIDE_STATE = PanelState.COLLAPSED;
+    private static PanelState DEFAULT_SLIDE_STATE = PanelState.ANCHORED;
 
     /**
      * Default height of the shadow above the peeking out panel
