@@ -19,6 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
+
 //TODO remove logs
 public class SlidingUpPanelLayout extends ViewGroup {
 
@@ -768,7 +769,12 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
 
     protected boolean lockPanel() {
-        return (mSlideState == PanelState.EXPANDED || mSlideState == PanelState.ANCHORED) && mDragViewScrollOffsetProvider != null && mDragViewScrollOffsetProvider.getScrollOffset() > 0;
+        if (mSlideState == PanelState.EXPANDED) {
+            return mDragViewScrollOffsetProvider != null && mDragViewScrollOffsetProvider.getScrollOffset() > 0;
+        } else if (mSlideState == PanelState.ANCHORED) {
+            return mDragViewScrollOffsetProvider != null && mDragViewScrollOffsetProvider.getScrollOffset() > 0 && mDragViewScrollOffsetProvider.getScrollOffset() < 1;
+        }
+        return false;
     }
 
 
@@ -836,7 +842,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
         boolean shouldIntercept = mDragHelper.shouldInterceptTouchEvent(ev);
         //1 - draging, 2 - settling, 0 - iddle
-        Log.d(TAG, makeActionString(action) + " intercept:" + shouldIntercept+" slidingState:"+mSlideState+" mDragHelperState:"+mDragHelper.getViewDragState());
+        Log.d(TAG, makeActionString(action) + " intercept:" + shouldIntercept + " slidingState:" + mSlideState + " mDragHelperState:" + mDragHelper.getViewDragState());
 
         return shouldIntercept;
     }
