@@ -782,6 +782,8 @@ public class SlidingUpPanelLayout extends ViewGroup {
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final int action = MotionEventCompat.getActionMasked(ev);
 
+        final float x = ev.getX();
+        final float y = ev.getY();
 
         if (!isEnabled() || !mIsSlidingEnabled || (mIsUnableToDrag && action != MotionEvent.ACTION_DOWN)) {
             Log.e(TAG, "SUPER UnableToDrag:" + mIsUnableToDrag + " AND (MOVE OR UP)");
@@ -790,13 +792,13 @@ public class SlidingUpPanelLayout extends ViewGroup {
         }
 
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
-            Log.e(TAG, "FALSE BECAUSE CANCEL OR UP");
+            Log.e(TAG, "FALSE BECAUSE CANCEL OR UP, PANEL OFFSET HIT");
+            if (isPanelOffsetUnder((int) mInitialMotionX, (int) mInitialMotionY) && mSlideState == PanelState.COLLAPSED) {
+                expandPanel();
+            }
             mDragHelper.cancel();
             return false;
         }
-
-        final float x = ev.getX();
-        final float y = ev.getY();
 
         switch (action) {
 
