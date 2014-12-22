@@ -13,14 +13,12 @@ import android.os.Parcelable;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 
-//TODO remove logs
 public class SlidingUpPanelLayout extends ViewGroup {
 
     private static final String TAG = SlidingUpPanelLayout.class.getSimpleName();
@@ -786,13 +784,13 @@ public class SlidingUpPanelLayout extends ViewGroup {
         final float y = ev.getY();
 
         if (!isEnabled() || !mIsSlidingEnabled || (mIsUnableToDrag && action != MotionEvent.ACTION_DOWN)) {
-            Log.e(TAG, "SUPER UnableToDrag:" + mIsUnableToDrag + " AND (MOVE OR UP)");
+//            Log.e(TAG, "SUPER UnableToDrag:" + mIsUnableToDrag + " AND (MOVE OR UP)");
             mDragHelper.cancel();
             return false;
         }
 
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
-            Log.e(TAG, "FALSE BECAUSE CANCEL OR UP, PANEL OFFSET HIT");
+//            Log.e(TAG, "FALSE BECAUSE CANCEL OR UP, PANEL OFFSET HIT");
             if (isPanelOffsetUnder((int) mInitialMotionX, (int) mInitialMotionY) && mSlideState == PanelState.COLLAPSED) {
                 expandPanel();
             }
@@ -818,7 +816,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
                 // Handle any horizontal scrolling on the drag view.
                 if (mIsUsingDragViewTouchEvents && adx > dragSlop && ady < dragSlop) {
-                    Log.e(TAG, "MOVE horizontal onIntercept");
+//                    Log.e(TAG, "MOVE horizontal onIntercept");
                     mDragHelper.cancel();
                     mIsUnableToDrag = true;
                     return false;
@@ -826,7 +824,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
                 boolean lockPanel = (lockPanel() && !isPanelOffsetUnder((int) mInitialMotionX, (int) mInitialMotionY));
                 if (lockPanel) {
-                    Log.e(TAG, "MOVE lockpanel onIntercept");
+//                    Log.e(TAG, "MOVE lockpanel onIntercept");
                     mDragHelper.cancel();
                     mIsUnableToDrag = true;
                     return false;
@@ -835,7 +833,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
                 if (((ady > dragSlop && adx > ady) || !isDragViewUnder((int) mInitialMotionX, (int) mInitialMotionY))) {
                     mDragHelper.cancel();
                     mIsUnableToDrag = true;
-                    Log.e(TAG, "MOVE false horizontal slope bigger OR its not dragging view");
+//                    Log.e(TAG, "MOVE false horizontal slope bigger OR its not dragging view");
                     return false;
                 }
                 break;
@@ -844,7 +842,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
 
         boolean shouldIntercept = mDragHelper.shouldInterceptTouchEvent(ev);
         //1 - draging, 2 - settling, 0 - iddle
-        Log.d(TAG, makeActionString(action) + " intercept:" + shouldIntercept + " slidingState:" + mSlideState + " mDragHelperState:" + mDragHelper.getViewDragState());
+//        Log.d(TAG, makeActionString(action) + " intercept:" + shouldIntercept + " slidingState:" + mSlideState + " mDragHelperState:" + mDragHelper.getViewDragState());
 
         return shouldIntercept;
     }
