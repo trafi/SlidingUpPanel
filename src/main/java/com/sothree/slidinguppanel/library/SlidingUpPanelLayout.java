@@ -402,6 +402,13 @@ public class SlidingUpPanelLayout extends ViewGroup {
     }
 
     /**
+     * @return
+     */
+    public int getSlideRange() {
+        return mSlideRange;
+    }
+
+    /**
      * @return The current collapsed panel height
      */
     public int getPanelHeight() {
@@ -703,6 +710,11 @@ public class SlidingUpPanelLayout extends ViewGroup {
                 default:
                     mSlideOffset = 0.f;
                     break;
+            }
+
+            if (mParallaxOffset > 0 && mSlideOffset >= 0) {
+                int mainViewOffset = getCurrentParalaxOffset();
+                mMainView.setTranslationY(mainViewOffset);
             }
         }
 
