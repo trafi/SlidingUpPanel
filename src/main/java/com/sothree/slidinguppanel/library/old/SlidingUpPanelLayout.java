@@ -1,4 +1,4 @@
-package com.sothree.slidinguppanel.library;
+package com.sothree.slidinguppanel.library.old;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -18,6 +18,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
+
+import com.sothree.slidinguppanel.library.deprecated.R;
 
 public class SlidingUpPanelLayout extends ViewGroup {
 
@@ -242,7 +244,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
     }
 
     /**
-     * No-op stubs for {@link com.sothree.slidinguppanel.library.SlidingUpPanelLayout.PanelSlideListener}. If you only want to implement a subset
+     * No-op stubs for {@link SlidingUpPanelLayout.PanelSlideListener}. If you only want to implement a subset
      * of the listener methods you can extend this instead of implement the full interface.
      */
     public static class SimplePanelSlideListener implements PanelSlideListener {

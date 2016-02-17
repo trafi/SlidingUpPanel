@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.sothree.slidinguppanel.library">
+    package="com.sothree.slidinguppanel.library.old">
 
     <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="21" />
 </manifest>

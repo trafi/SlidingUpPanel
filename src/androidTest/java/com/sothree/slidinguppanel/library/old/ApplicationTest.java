@@ -1,4 +1,4 @@
-package com.sothree.slidinguppanel.library;
+package com.sothree.slidinguppanel.library.old;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

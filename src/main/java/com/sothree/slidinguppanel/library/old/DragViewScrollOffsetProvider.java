@@ -1,4 +1,4 @@
-package com.sothree.slidinguppanel.library;
+package com.sothree.slidinguppanel.library.old;
 
 /**
  * Created by tadas on 08/12/14.
