@@ -19,7 +19,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 
-import com.sothree.slidinguppanel.library.deprecated.R;
 
 public class SlidingUpPanelLayout extends ViewGroup {
 
@@ -178,7 +177,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
     /**
      * Flag indicating if a drag view can have its own touch events.  If set
      * to true, a drag view can scroll horizontally and have its own click listener.
-     * <p/>
+     * <p>
      * Default is set to false.
      */
     private boolean mIsUsingDragViewTouchEvents;
@@ -766,7 +765,7 @@ public class SlidingUpPanelLayout extends ViewGroup {
     /**
      * Set if the drag view can have its own touch events.  If set
      * to true, a drag view can scroll horizontally and have its own click listener.
-     * <p/>
+     * <p>
      * Default is set to false.
      */
     public void setEnableDragViewTouchEvents(boolean enabled) {
